@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mall Expense Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn-danger {
+            background-color: #f44336;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+        .btn-export {
+            background-color: #2196F3;
+            margin-left: 10px;
+        }
+        .btn-export:hover {
+            background-color: #0b7dda;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .totals {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #f2f2f2;
+            border-radius: 4px;
+        }
+        .totals-row:last-child {
+            font-weight: bold;
+            background-color: #e0e0e0;
+            font-size: 18px;
+        }
+        .saturday-section {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .saturday-section label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .action-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .form-group {
+                min-width: 100%;
+            }
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .btn-export {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+            .totals-row {
+                width: 100%;
+                max-width: none;
+            }
+            h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mall Expense Tracker</h1>
+        
+        <div class="input-group">
+            <div class="form-group">
+                <label for="date">Date:</label>
+                <input type="date" id="date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="mall">Mall:</label>
+                <select id="mall" class="form-control">
+                    <option value="">Select Mall</option>
+                    <option value="crystalmall">Crystal Mall</option>
+                    <option value="kuvadvaroad">Kuvadva Road</option>
+                    <option value="gondalroad">Gondal Road</option>
+                    <option value="lalpark">Lalpark</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" class="form-control" min="0">
+            </div>
+            <button class="btn" id="addEntry">Add Entry</button>
+        </div>
+        
+        <div class="table-responsive">
+            <table id="expenseTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Crystal Mall</th>
+                        <th>Gondal Road</th>
+                        <th>Kuvadva Road</th>
+                        <th>Lalpark</th>
+                        <th>Total (4%)</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table data will be added here dynamically -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="saturday-section">
+            <label for="saturdayNumber">Saturday Amount:</label>
+            <select id="saturdayNumber" class="form-control" style="width: 100px; display: inline-block;">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+            <span id="saturdayAmount">₹0</span>
+        </div>
+        
+        <div class="totals">
+            <div class="totals-row">
+                <span>Total:</span>
+                <span id="totalAmount">₹0</span>
+            </div>
+            <div class="totals-row">
+                <span>Saturday:</span>
+                <span id="saturdayTotal">₹0</span>
+            </div>
+            <div class="totals-row">
+                <span>Final Total:</span>
+                <span id="finalTotal">₹0</span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn" id="calculateTotal">Calculate Total</button>
+            <button class="btn btn-export" id="exportExcel">Export to Excel</button>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize data storage
+        const entries = [];
+        let totalSum = 0;
+        let saturdayValue = 0;
+        
+        // DOM elements
+        const dateInput = document.getElementById('date');
+        const mallSelect = document.getElementById('mall');
+        const amountInput = document.getElementById('amount');
+        const addEntryBtn = document.getElementById('addEntry');
+        const expenseTable = document.getElementById('expenseTable').getElementsByTagName('tbody')[0];
+        const saturdaySelect = document.getElementById('saturdayNumber');
+        const saturdayAmountSpan = document.getElementById('saturdayAmount');
+        const totalAmountSpan = document.getElementById('totalAmount');
+        const saturdayTotalSpan = document.getElementById('saturdayTotal');
+        const finalTotalSpan = document.getElementById('finalTotal');
+        const calculateBtn = document.getElementById('calculateTotal');
+        const exportBtn = document.getElementById('exportExcel');
+        
+        // Function to add a new entry
+        addEntryBtn.addEventListener('click', function() {
+            const date = dateInput.value;
+            const mall = mallSelect.value;
+            const amount = parseFloat(amountInput.value);
+            
+            if (!date || !mall || isNaN(amount) || amount <= 0) {
+                alert('Please fill all fields with valid values');
+                return;
+            }
+            
+            // Format date for display
+            const displayDate = new Date(date).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short'
+            });
+            
+            // Calculate 4% of amount
+            const total = amount * 0.04;
+            
+            // Check if entry with same date exists
+            const existingEntryIndex = entries.findIndex(e => e.date === displayDate);
+            
+            if (existingEntryIndex !== -1) {
+                // Update existing entry
+                const existingEntry = entries[existingEntryIndex];
+                
+                if (mall === 'crystalmall') existingEntry.crystalmall = amount;
+                if (mall === 'gondalroad') existingEntry.gondalroad = amount;
+                if (mall === 'kuvadvaroad') existingEntry.kuvadvaroad = amount;
+                if (mall === 'lalpark') existingEntry.lalpark = amount;
+                
+                // Update total - we need to recalculate it
+                existingEntry.total = ((existingEntry.crystalmall || 0) + 
+                                      (existingEntry.gondalroad || 0) + 
+                                      (existingEntry.kuvadvaroad || 0) + 
+                                      (existingEntry.lalpark || 0)) * 0.04;
+                
+                // Update table
+                updateTableRow(existingEntryIndex, existingEntry);
+            } else {
+                // Create a new entry object
+                const newEntry = {
+                    date: displayDate,
+                    crystalmall: mall === 'crystalmall' ? amount : null,
+                    gondalroad: mall === 'gondalroad' ? amount : null,
+                    kuvadvaroad: mall === 'kuvadvaroad' ? amount : null,
+                    lalpark: mall === 'lalpark' ? amount : null,
+                    total: total
+                };
+                
+                entries.push(newEntry);
+                
+                // Add to table
+                addEntryToTable(newEntry);
+            }
+            
+            // Clear input fields
+            dateInput.value = '';
+            mallSelect.value = '';
+            amountInput.value = '';
+        });
+        
+        // Function to add entry to the table
+        function addEntryToTable(entry) {
+            const row = expenseTable.insertRow();
+            row.dataset.date = entry.date; // Store date for reference
+            
+            const dateCell = row.insertCell(0);
+            const crystalMallCell = row.insertCell(1);
+            const gondalRoadCell = row.insertCell(2);
+            const kuvadvaRoadCell = row.insertCell(3);
+            const lalparkCell = row.insertCell(4);
+            const totalCell = row.insertCell(5);
+            const actionCell = row.insertCell(6);
+            
+            dateCell.textContent = entry.date;
+            crystalMallCell.textContent = entry.crystalmall || '';
+            gondalRoadCell.textContent = entry.gondalroad || '';
+            kuvadvaRoadCell.textContent = entry.kuvadvaroad || '';
+            lalparkCell.textContent = entry.lalpark || '';
+            totalCell.textContent = entry.total.toFixed(2);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.onclick = function() {
+                const index = Array.from(expenseTable.rows).indexOf(row);
+                entries.splice(index, 1);
+                expenseTable.deleteRow(index);
+            };
+            
+            actionCell.appendChild(deleteBtn);
+        }
+        
+        // Function to update an existing table row
+        function updateTableRow(index, entry) {
+            const row = expenseTable.rows[index];
+            
+            row.cells[1].textContent = entry.crystalmall || '';
+            row.cells[2].textContent = entry.gondalroad || '';
+            row.cells[3].textContent = entry.kuvadvaroad || '';
+            row.cells[4].textContent = entry.lalpark || '';
+            row.cells[5].textContent = entry.total.toFixed(2);
+        }
+        
+        // Update Saturday amount
+        saturdaySelect.addEventListener('change', function() {
+            const number = parseInt(this.value);
+            saturdayValue = number * 300;
+            saturdayAmountSpan.textContent = `₹${saturdayValue}`;
+            saturdayTotalSpan.textContent = `₹${saturdayValue}`;
+            
+            // Update final total - round to whole number
+            const finalTotal = Math.round(totalSum + saturdayValue);
+            finalTotalSpan.textContent = `₹${finalTotal}`;
+        });
+        
+        // Calculate total button
+        calculateBtn.addEventListener('click', function() {
+            totalSum = 0;
+            entries.forEach(entry => {
+                totalSum += entry.total;
+            });
+            
+            totalAmountSpan.textContent = `₹${totalSum.toFixed(2)}`;
+            
+            // Update final total - round to whole number
+            const finalTotal = Math.round(totalSum + saturdayValue);
+            finalTotalSpan.textContent = `₹${finalTotal}`;
+        });
+        
+        // Export to Excel
+        exportBtn.addEventListener('click', function() {
+            if (entries.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            
+            // Prepare data for export
+            const data = [
+                ['date', 'crystalmall', 'gondalroad', 'kuvadvaroad', 'lalpark', 'total']
+            ];
+            
+            entries.forEach(entry => {
+                data.push([
+                    entry.date,
+                    entry.crystalmall || '',
+                    entry.gondalroad || '',
+                    entry.kuvadvaroad || '',
+                    entry.lalpark || '',
+                    entry.total.toFixed(2)
+                ]);
+            });
+            
+            // Add final totals - round the final total
+            data.push(['', '', '', '', 'Total', totalSum.toFixed(2)]);
+            data.push(['', '', '', '', 'Saturday', saturdayValue]);
+            data.push(['', '', '', '', 'Final Total', Math.round(totalSum + saturdayValue)]);
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Apply styling to Final Total - make it bold and 2 sizes bigger
+            const finalTotalCell = XLSX.utils.encode_cell({r: data.length - 1, c: 5}); // Final Total value cell
+            const finalTotalLabelCell = XLSX.utils.encode_cell({r: data.length - 1, c: 4}); // Final Total label cell
+            
+            if(!ws.s) ws.s = {};
+            if(!ws.s.cells) ws.s.cells = {};
+            
+            // Style for Final Total value
+            ws.s.cells[finalTotalCell] = {
+                font: {
+                    bold: true,
+                    sz: 14 // Regular size is 10-11, so 14 is about 2 sizes bigger
+                }
+            };
+            
+            // Style for Final Total label
+            ws.s.cells[finalTotalLabelCell] = {
+                font: {
+                    bold: true,
+                    sz: 14
+                }
+            };
+            
+            // Get current month and year for filename
+            const now = new Date();
+            const month = now.toLocaleString('default', { month: 'short' });
+            const year = now.getFullYear();
+            const filename = `${month}-${year}.xlsx`;
+            
+            XLSX.utils.book_append_sheet(wb, ws, "Mall Expenses");
+            XLSX.writeFile(wb, filename);
+        });
+    </script>
+</body>
+</html>
