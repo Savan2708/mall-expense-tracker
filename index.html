@@ -190,6 +190,7 @@
                     <option value="kuvadvaroad">Kuvadva Road</option>
                     <option value="gondalroad">Gondal Road</option>
                     <option value="lalpark">Lalpark</option>
+                    <option value="madhaprmall">Madhapr Mall</option>
                 </select>
             </div>
             <div class="form-group">
@@ -208,6 +209,7 @@
                         <th>Gondal Road</th>
                         <th>Kuvadva Road</th>
                         <th>Lalpark</th>
+                        <th>Madhapr Mall</th>
                         <th>Total (4%)</th>
                         <th>Action</th>
                     </tr>
@@ -308,12 +310,14 @@
                 if (mall === 'gondalroad') existingEntry.gondalroad = amount;
                 if (mall === 'kuvadvaroad') existingEntry.kuvadvaroad = amount;
                 if (mall === 'lalpark') existingEntry.lalpark = amount;
+                if (mall === 'madhaprmall') existingEntry.madhaprmall = amount;
                 
                 // Update total - we need to recalculate it
                 existingEntry.total = ((existingEntry.crystalmall || 0) + 
                                       (existingEntry.gondalroad || 0) + 
                                       (existingEntry.kuvadvaroad || 0) + 
-                                      (existingEntry.lalpark || 0)) * 0.04;
+                                      (existingEntry.lalpark || 0) + 
+                                      (existingEntry.madhaprmall || 0)) * 0.04;
                 
                 // Update table
                 updateTableRow(existingEntryIndex, existingEntry);
@@ -325,6 +329,7 @@
                     gondalroad: mall === 'gondalroad' ? amount : null,
                     kuvadvaroad: mall === 'kuvadvaroad' ? amount : null,
                     lalpark: mall === 'lalpark' ? amount : null,
+                    madhaprmall: mall === 'madhaprmall' ? amount : null,
                     total: total
                 };
                 
@@ -350,14 +355,16 @@
             const gondalRoadCell = row.insertCell(2);
             const kuvadvaRoadCell = row.insertCell(3);
             const lalparkCell = row.insertCell(4);
-            const totalCell = row.insertCell(5);
-            const actionCell = row.insertCell(6);
+            const madhaprMallCell = row.insertCell(5);
+            const totalCell = row.insertCell(6);
+            const actionCell = row.insertCell(7);
             
             dateCell.textContent = entry.date;
             crystalMallCell.textContent = entry.crystalmall || '';
             gondalRoadCell.textContent = entry.gondalroad || '';
             kuvadvaRoadCell.textContent = entry.kuvadvaroad || '';
             lalparkCell.textContent = entry.lalpark || '';
+            madhaprMallCell.textContent = entry.madhaprmall || '';
             totalCell.textContent = entry.total.toFixed(2);
             
             const deleteBtn = document.createElement('button');
@@ -380,7 +387,8 @@
             row.cells[2].textContent = entry.gondalroad || '';
             row.cells[3].textContent = entry.kuvadvaroad || '';
             row.cells[4].textContent = entry.lalpark || '';
-            row.cells[5].textContent = entry.total.toFixed(2);
+            row.cells[5].textContent = entry.madhaprmall || '';
+            row.cells[6].textContent = entry.total.toFixed(2);
         }
         
         // Update Saturday amount
@@ -421,7 +429,7 @@
             
             // Prepare data for export
             const data = [
-                ['date', 'crystalmall', 'gondalroad', 'kuvadvaroad', 'lalpark', 'total']
+                ['date', 'crystalmall', 'gondalroad', 'kuvadvaroad', 'lalpark', 'madhaprmall', 'total']
             ];
             
             entries.forEach(entry => {
@@ -431,20 +439,21 @@
                     entry.gondalroad || '',
                     entry.kuvadvaroad || '',
                     entry.lalpark || '',
+                    entry.madhaprmall || '',
                     entry.total.toFixed(2)
                 ]);
             });
             
             // Add final totals - round the final total
-            data.push(['', '', '', '', 'Total', totalSum.toFixed(2)]);
-            data.push(['', '', '', '', 'Saturday', saturdayValue]);
-            data.push(['', '', '', '', 'Final Total', Math.round(totalSum + saturdayValue)]);
+            data.push(['', '', '', '', '', 'Total', totalSum.toFixed(2)]);
+            data.push(['', '', '', '', '', 'Saturday', saturdayValue]);
+            data.push(['', '', '', '', '', 'Final Total', Math.round(totalSum + saturdayValue)]);
             
             const ws = XLSX.utils.aoa_to_sheet(data);
             
             // Apply styling to Final Total - make it bold and 2 sizes bigger
-            const finalTotalCell = XLSX.utils.encode_cell({r: data.length - 1, c: 5}); // Final Total value cell
-            const finalTotalLabelCell = XLSX.utils.encode_cell({r: data.length - 1, c: 4}); // Final Total label cell
+            const finalTotalCell = XLSX.utils.encode_cell({r: data.length - 1, c: 6}); // Final Total value cell
+            const finalTotalLabelCell = XLSX.utils.encode_cell({r: data.length - 1, c: 5}); // Final Total label cell
             
             if(!ws.s) ws.s = {};
             if(!ws.s.cells) ws.s.cells = {};
